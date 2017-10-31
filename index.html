@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Msg</title>
+	<style type="text/css">
+		body {background: black;position: relative;}
+		input {border-radius: 5px;}
+		.div_div {text-align: center; width: 40%; height: 30%; margin-top: 10%; margin-left: 30%;
+				background-color: rgba(18,15,98,0.6); border: white solid 1px;}
+		.div_table {text-align: center; width: 0; height: 0; margin: 0 auto; font-family: "XTxingti"; color: white;}
+		.div_tr {padding-left: 10%; padding: 5%; text-align: left;}
+		.div_th {padding: 5%;}
+		.div_submit {padding-right: 20%; text-align: right; padding: 5%;}
+		.div_table tr {width: 0; height: 0; margin: 0 auto;}
+		.div_table th{margin-top: 30px; margin-bottom: 30px;}
+		#msgborder{color: rgba(18,120,100,0.6);position: absolute; border:rgba(255,255,255,0.5) 1px solid;
+				float: right;margin-top: 10%;padding:1% 3% 1% 3%;display: ;border-top-right-radius:  10%;
+				border-top-left-radius: 10%;border-bottom-right-radius: 10%;}
+		#msg{margin-left:30%;color: rgba(155,21,155,0.6);}
+	</style>
+	
+	<script type="text/javascript">
+		
+		function createXHR() 
+		{
+		    var xhr;
+
+		    try 
+		    {
+		        xhr = new ActiveXObject("Msxml2.XMLHTTP");
+		    }catch(e){
+
+		        try 
+		        {
+		            xhr = new ActiveXObject("Microsoft.XMLHTTP");
+		        } catch(E)   {
+		            xhr = false;
+		        }
+		    }
+
+		    if (!xhr && typeof XMLHttpRequest != 'undefined') 
+		    {
+		        xhr = new XMLHttpRequest();
+		    }
+
+		    return xhr;
+		}
+
+		function sender() 
+		{
+		    xhr = createXHR();
+
+		    if(xhr)
+		    {
+		        xhr.onreadystatechange=callbackFunction;
+		       	
+		       	// alert("333");
+		        xhr.open("POST", "http://192.168.11.23:5210/cgi-bin/cgi.cgi" );//+ new Date.getTime());
+		    	
+		        xhr.send("s=4&f=4&m=msg");   
+		 }else{
+		        alert("Browser does not support, please change the browser!");
+		    }
+		}
+
+		function callbackFunction()
+		{
+		    if (xhr.readyState == 4) 
+		    {
+		        if (xhr.status == 200) 
+		        {
+		            var returnValue = xhr.responseText;
+		            if(returnValue != null && returnValue.length > 0)
+		            {
+		            	var msgsall = returnValue.split(":");
+		            	document.getElementById("count").innerHTML = msgsall[1];
+		                document.getElementById("msg").innerHTML = msgsall[0];
+		     			
+		     			document.getElementById("msgborder").style.display="block";
+		     			setTimeout(function(){document.getElementById("msgborder").style.display="none";},1000);
+
+		                setTimeout(sender, 1000);
+		            }else{
+		                alert("The result is empty!");
+		            }
+		        }  else {
+		            alert("Abnormal pages!");
+		        }
+		    }
+		}
+	
+	</script>
+
+</head>
+<body onload="sender()">
+
+	<div id="msgborder">
+		<div id="count">Count:</div>
+		<div id="msg" >Msg</div>
+	</div>
+
+	<div class="div_div">
+
+		<form action="http://192.168.11.23:5210/cgi-bin/cgi.cgi" method="post">
+			
+			<table class="div_table">
+			
+			<tr class="div_th"><th class="div_th">Msg</th></tr>
+
+			<tr class="div_tr">
+				<th  class="div_tr">From</th>
+			</tr>
+			<tr >
+				<td><input type="text" name="selfcount" value="4"></td>
+			</tr>
+			<tr class="div_tr">
+				<th  class="div_tr">Send to </th>
+			</tr>
+			<tr>
+				<td><input id="" type="text" name="sendcount" value="4"></td>
+			</tr>
+			<tr class="div_tr">
+				<th class="div_tr">Msg</th>
+			</tr>
+			<tr>
+				<td><input type="text" name="sendmsg" value="Msg"></td>
+			</tr>
+
+			<tr class="div_submit">
+				<td class="div_submit"><input type="submit" style="font-size: 30;" name="" value="Send msg" ></td>
+			</tr>
+
+			</table>
+		</form>
+	</div>
+
+</body>
+</html>

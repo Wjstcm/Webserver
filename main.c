@@ -1,45 +1,82 @@
-#include "tcp.h"
+#include "server.h"
+#include "threadpool.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-    int ser_fd = passive_server(5210,20);
+	int sockfd = 0;				
+	int connfd = 0;
+	int err_log = 0;
+	struct sockaddr_in my_addr;	
+	unsigned short port = 5210;
+	pthread_t thread_id;
 
-    struct sockaddr_in client_addr;
-    socklen_t addr_length = sizeof(client_addr);
-    int conn = accept(ser_fd,(struct sockaddr*)&client_addr, &addr_length);
+	char recv_buf[10] = "";	
 
-    shakehands(conn);
+	system("clear");
 
-    int count = 10;
-    while (count--)
-    {
-        frame_head head;
-        int rul = recv_frame_head(conn,&head);
-        if (rul < 0)
-            break;
-        printf("fin=%d\nopcode=0x%X\nmask=%d\npayload_len=%llu\n",head.fin,head.opcode,head.mask,head.payload_length);
+	printf("\n\t\t\t Successful startup Msg Server \n");
+	
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);  
+	if(sockfd < 0)
+	{
+		perror("socket error");
+		exit(-1);
+	}
 
-        send_frame_head(conn,&head);
-      
-        char payload_data[1024] = {0};
-        int size = 0;
-        do {
-            int rul;
-            rul = read(conn,payload_data,1024);
-            if (rul<=0)
-                break;
-            size+=rul;
+	bzero(&my_addr, sizeof(my_addr));	   
+	my_addr.sin_family = AF_INET;
+	my_addr.sin_port   = htons(port);
+	my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-            umask(payload_data,size,head.masking_key);
-            printf("recive:%s",payload_data);
+	err_log = bind(sockfd, (struct sockaddr*)&my_addr, sizeof(my_addr));
+	if(err_log != 0)
+	{
+		perror("bind");
+		close(sockfd);		
+		exit(-1);
+	}
 
-            if (write(conn,payload_data,rul)<=0)
-                break;
-        }while(size<head.payload_length);
-        printf("\n-----------\n");
+	err_log = listen(sockfd, 10);
+	if( err_log != 0)
+	{
+		perror("listen");
+		close(sockfd);		
+		exit(-1);
+	}
 
-    }
+	pool_init(10);
 
-    close(conn);
-    close(ser_fd);
+	while(1)
+	{
+
+		char cli_ip[INET_ADDRSTRLEN] = "";	  
+		struct sockaddr_in client_addr;		  
+		socklen_t cliaddr_len = sizeof(client_addr);   
+
+		connfd = accept(sockfd, (struct sockaddr*)&client_addr, &cliaddr_len);  
+		if(connfd < 0)
+		{
+			perror("accept this time");
+			continue;
+		}
+
+		if(recv(connfd, recv_buf, 10, 0) > 0)
+		{
+			if(recv_buf[0] == 'G' && recv_buf[5] == ' ')
+			{
+				if(connfd > 0)
+				{
+					pool_add_worker (client_fun, (void *)connfd);  
+				}
+			}else {
+				//close(connfd);
+			}
+		}else {
+			//close(connfd);
+		}
+	}
+
+	close(sockfd);
+	pool_destroy ();  
+	return 0;
 }
