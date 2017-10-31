@@ -1,0 +1,7 @@
+
+SHA1(error)
+
+
+sudo apt-get install libssl-dev
+
+-lssl/-lcrypto
